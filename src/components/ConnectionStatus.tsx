@@ -5,13 +5,13 @@ import { AlertTriangle, Wifi, WifiOff, Info } from 'lucide-react';
 
 interface ConnectionStatusProps {
   midiConnected: boolean;
-  wledConnected: boolean;
+  artnetConnected: boolean;
   error: string;
 }
 
 const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
   midiConnected,
-  wledConnected,
+  artnetConnected,
   error
 }) => {
   return (
@@ -40,15 +40,15 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
           
           <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10">
             <Badge 
-              variant={wledConnected ? "default" : "secondary"}
-              className={wledConnected ? "bg-green-500 hover:bg-green-600" : "bg-gray-500"}
+              variant={artnetConnected ? "default" : "secondary"}
+              className={artnetConnected ? "bg-green-500 hover:bg-green-600" : "bg-gray-500"}
             >
-              {wledConnected ? (
+              {artnetConnected ? (
                 <Wifi className="h-3 w-3 mr-1" />
               ) : (
                 <WifiOff className="h-3 w-3 mr-1" />
               )}
-              WLED Device
+              WLED Art-Net
             </Badge>
           </div>
         </div>
@@ -69,19 +69,23 @@ const ConnectionStatus: React.FC<ConnectionStatusProps> = ({
             </li>
             <li className="flex items-start gap-2">
               <span className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></span>
-              Connect your ESP32 with WLED via USB
+              Configure WLED with Art-Net enabled (Sync Settings → E1.31/Art-Net → DMX type: Effect)
             </li>
             <li className="flex items-start gap-2">
               <span className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></span>
-              Select the devices from the dropdowns above
+              Enter your WLED IP address and connect via Art-Net
             </li>
             <li className="flex items-start gap-2">
               <span className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></span>
-              Use the first 3 columns of pads to control WLED presets 1-24
+              Use the first 3 columns of pads to control different colors for all LEDs
             </li>
             <li className="flex items-start gap-2">
               <span className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></span>
-              Use the first fader to control overall brightness
+              Use the first fader to control overall brightness (affects all LEDs)
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></span>
+              Use faders 2 & 3 to adjust color intensity
             </li>
           </ul>
         </div>

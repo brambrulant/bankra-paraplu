@@ -9,12 +9,8 @@ import MIDIEventLog from "./components/MIDIEventLog";
 
 interface Device {
   id?: number;
-  path?: string;
   name?: string;
   type?: string;
-  manufacturer?: string;
-  serialNumber?: string;
-  pnpId?: string;
 }
 
 interface WLEDState {
@@ -34,15 +30,12 @@ interface MIDIEvent {
 
 function App() {
   const [midiDevices, setMidiDevices] = useState<Device[]>([]);
-  const [serialDevices, setSerialDevices] = useState<Device[]>([]);
   const [selectedMidiInputDevice, setSelectedMidiInputDevice] =
     useState<Device | null>(null);
   const [selectedMidiOutputDevice, setSelectedMidiOutputDevice] =
     useState<Device | null>(null);
-  const [selectedSerialDevice, setSelectedSerialDevice] =
-    useState<Device | null>(null);
   const [midiConnected, setMidiConnected] = useState(false);
-  const [wledConnected, setWledConnected] = useState(false);
+  const [artnetConnected, setArtnetConnected] = useState(false);
   const [wledState, setWledState] = useState<WLEDState>({
     on: false,
     bri: 255,
@@ -71,13 +64,11 @@ function App() {
         switch (data.type) {
           case "initial_state":
             setMidiDevices(data.data.midiDevices || []);
-            setSerialDevices(data.data.serialDevices || []);
             setWledState(data.data.wledState || wledState);
             break;
 
           case "devices_updated":
             setMidiDevices(data.data.midiDevices || []);
-            setSerialDevices(data.data.serialDevices || []);
             break;
 
           case "midi_connected":
@@ -101,13 +92,13 @@ function App() {
             }
             break;
 
-          case "wled_connected":
-            setWledConnected(true);
-            setSelectedSerialDevice(data.device);
+          case "artnet_connected":
+            setArtnetConnected(true);
+            setConnectionError("");
             break;
 
           case "wled_disconnected":
-            setWledConnected(false);
+            setMidiConnected(false);
             break;
 
           case "wled_state_update":
@@ -116,7 +107,10 @@ function App() {
 
           case "midi_event": {
             const newEvent: MIDIEvent = {
-              ...data.data,
+              status: data.data.command << 4,
+              note: data.data.note,
+              velocity: data.data.velocity,
+              deltaTime: 0,
               timestamp: Date.now(),
             };
             setMidiEvents((prev) => [newEvent, ...prev.slice(0, 49)]);
@@ -176,15 +170,25 @@ function App() {
     }
   };
 
-  const connectWLED = (device: Device) => {
-    if (wsRef.current && device.path) {
+  const connectArtnet = (host: string, universe: number) => {
+    if (wsRef.current) {
       wsRef.current.send(
         JSON.stringify({
-          type: "connect_wled",
-          portPath: device.path,
+          type: "connect_artnet",
+          host: host,
+          universe: universe,
         })
       );
-      setSelectedSerialDevice(device);
+    }
+  };
+
+  const testArtnet = () => {
+    if (wsRef.current) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: "test_artnet",
+        })
+      );
     }
   };
 
@@ -232,17 +236,17 @@ function App() {
               />
 
               <WLEDSelector
-                devices={serialDevices}
-                selectedDevice={selectedSerialDevice}
-                onDeviceSelect={connectWLED}
                 onRefresh={refreshDevices}
-                connected={wledConnected}
+                connected={artnetConnected}
+                onArtnetConnect={connectArtnet}
+                artnetConnected={artnetConnected}
+                onTestArtnet={testArtnet}
               />
             </div>
 
             <ConnectionStatus
               midiConnected={midiConnected}
-              wledConnected={wledConnected}
+              artnetConnected={artnetConnected}
               error={connectionError}
             />
           </CardContent>
@@ -257,7 +261,7 @@ function App() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <LEDVisualization wledState={wledState} connected={wledConnected} />
+            <LEDVisualization wledState={wledState} connected={midiConnected} />
           </CardContent>
         </Card>
 
